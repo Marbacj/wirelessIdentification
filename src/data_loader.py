@@ -1,23 +1,26 @@
 import os
 import pandas as pd
-import chardet
+from CSIKit import CSIData
+import sys
 
-def load_data_from_folder(folder_path):
+def load_csi_data_from_folder(folder_path):
+    """
+    读取文件夹中的所有 .dat 文件并合并为一个 DataFrame
+    :param folder_path: 文件夹路径
+    :return: 合并后的 pandas DataFrame
+    """
     all_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.dat')]
-    df_list = []
+    csi_frames = []
 
     for file in all_files:
-        with open(file, 'rb') as f:  # 以二进制模式读取文件
-            result = chardet.detect(f.read())  # 检测编码
-        encoding = result['encoding']  # 获取检测到的编码
+        csi_data = CSIData(file)
+        df = csi_data.to_dataframe()  # 使用 csikit 将 CSI 数据转换为 DataFrame
+        csi_frames.append(df)
 
-        df = pd.read_csv(file, delimiter=',', encoding=encoding)  # 使用检测到的编码读取文件
-        df_list.append(df)
-
-    combined_df = pd.concat(df_list, ignore_index=True)
-    return combined_df
+    combined_csi_df = pd.concat(csi_frames, ignore_index=True)
+    return combined_csi_df
 
 if __name__ == "__main__":
-    folder_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis'
-    combined_df = load_data_from_folder(folder_path)
-    print(combined_df.head())
+    folder_path = 'path/to/your/folder'
+    combined_csi_df = load_csi_data_from_folder(folder_path)
+    print(combined_csi_df.head())
