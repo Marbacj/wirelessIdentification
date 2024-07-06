@@ -13,7 +13,7 @@ def generate_labels(data_folder):
 
 
 if __name__ == "__main__":
-    data_folder = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data'  # 替换为你的数据文件夹路径
+    data_folder = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis'  # 替换为你的数据文件夹路径
     labels = generate_labels(data_folder)
 
     # 保存标签为 npy_file.npy 文件

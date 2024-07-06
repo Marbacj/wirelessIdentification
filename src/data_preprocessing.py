@@ -1,31 +1,44 @@
 import os
-import CSIKit
 import numpy as np
-def read_csi_data(file_path):
-    """读取单个.dat文件的CSI数据"""
-    csi_data = csikit.read_file(file_path)
-    return csi_data
+from scipy.signal import butter, filtfilt
+from CSIKit
 
-def preprocess_csi_data(csi_data):
-    """对CSI数据进行预处理，包括CIR转换和多径消除"""
-    # 示例：进行CIR转换和多径消除
-    cir_data = csikit.convert_to_cir(csi_data)
-    processed_data = csikit.remove_multipath(cir_data, threshold=0.5)
-    cfr_data = csikit.convert_to_cfr(processed_data)
-    return cfr_data
 
-def read_and_preprocess_data(folder_path):
-    """读取文件夹中的所有.dat文件并进行预处理"""
-    all_data = []
-    for file_name in os.listdir(folder_path):
-        if file_name.endswith('.dat'):
-            file_path = os.path.join(folder_path, file_name)
-            csi_data = read_csi_data(file_path)
-            processed_data = preprocess_csi_data(csi_data)
-            all_data.append(processed_data)
-    return all_data
+def bandpass_filter(data, lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype='band')
+    y = filtfilt(b, a, data)
+    return y
 
-if __name__ == "__main__":
-    folder_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data'
-    all_processed_data = read_and_preprocess_data(folder_path)
-    # 将预处理后的数据保存或进一步处理
+
+def preprocess_data(csi_data, lowcut=0.3, highcut=2.0, fs=50.0):
+    filtered_data = bandpass_filter(csi_data, lowcut, highcut, fs)
+    return filtered_data
+
+
+# 定义文件夹路径
+folder_path = "C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis"
+
+# 遍历文件夹中的每一个文件
+for filename in os.listdir(folder_path):
+    if filename.endswith(".dat"):
+        file_path = os.path.join(folder_path, filename)
+
+        # 获取合适的读取器
+        reader = get_reader(file_path)
+
+        # 读取文件
+        csi_data = reader.read_file(file_path)
+
+        # 假设 csi_data 包含 CSI 矩阵
+        csi_matrix = csi_data.csi_matrix.astype(np.int16)  # 将数据转换为 int16
+
+        # 对 CSI 数据进行预处理
+        preprocessed_data = preprocess_data(csi_matrix)
+
+        # 处理后的数据可以保存或进一步分析
+        print(f"Processed {filename}")
+
+print("All files processed.")
