@@ -1,23 +1,40 @@
-from data_loader import load_data_from_folder
-from data_preprocessing import preprocess_data
-from model import train_model, evaluate_model
-from sklearn.model_selection import train_test_split
+import os
+import numpy as np
+import joblib
+from data_preprocessing import read_and_preprocess_data
+from feature_extraction import extract_features
+from step_detection import detect_steps
+from gait_analysis import analyze_gait
+from model_training import train_model
 
-def main():
-    folder_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis'
-    df = load_data_from_folder(folder_path)
-    df_scaled = preprocess_data(df)
 
-    X = df_scaled.drop('label_column', axis=1)  # 修改 'label_column' 为实际标签列名
-    y = df_scaled['label_column']
+def main(data_folder, labels_file):
+    """主程序"""
+    # 1. 数据预处理
+    preprocessed_data = read_and_preprocess_data(data_folder)
+    np.save('preprocessed_data.npy', preprocessed_data)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # 2. 特征提取
+    features = extract_features(preprocessed_data)
+    np.save('features.npy', features)
 
-    input_size = X_train.shape[1]
-    hidden_size = 50
-    num_classes = len(y.unique())
-    model = train_model(X_train, y_train, input_size, hidden_size, num_classes)
-    evaluate_model(model, X_test, y_test)
+    # 3. 步长检测
+    steps = detect_steps(preprocessed_data)
+    np.save('steps.npy', steps)
+
+    # 4. 步态分析
+    gait_profiles = analyze_gait(steps, features)
+    np.save('gait_profiles.npy', gait_profiles)
+
+    # 5. 模型训练和评估
+    labels = np.load(labels_file)
+    model = train_model(gait_profiles, labels)
+
+    # 保存训练好的模型
+    joblib.dump(model, 'trained_model.pkl')
+
 
 if __name__ == "__main__":
-    main()
+    data_folder = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data'  # 替换为你的数据文件夹路径
+    labels_file = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/label/npy_file.npy'  # 替换为你的标签文件路径
+    main(data_folder, labels_file)
