@@ -1,10 +1,21 @@
+import os
 import numpy as np
 
-def generate_labels(num_samples, save_path):
-    labels = np.random.randint(0, 2, size=num_samples)  # 随机生成0和1的标签
-    np.save(save_path, labels)
+
+def generate_labels(data_folder):
+    labels = []
+    for filename in os.listdir(data_folder):
+        if filename.endswith('.dat'):
+            # 提取第一个连字符（-）之前的部分作为标签
+            label = filename.split('-')[0]
+            labels.append(label)
+    return np.array(labels)
+
 
 if __name__ == "__main__":
-    num_samples = 100  # 假设有100个样本
-    save_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/label/npy_file.npy'  # 指定保存路径
-    generate_labels(num_samples, save_path)
+    data_folder = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data'  # 替换为你的数据文件夹路径
+    labels = generate_labels(data_folder)
+
+    # 保存标签为 npy_file.npy 文件
+    save_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/label/npy_file.npy'
+    np.save(save_path, labels)

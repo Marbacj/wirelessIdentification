@@ -1,6 +1,6 @@
 import os
 import CSIKit
-
+import numpy as np
 def read_csi_data(file_path):
     """读取单个.dat文件的CSI数据"""
     csi_data = csikit.read_file(file_path)

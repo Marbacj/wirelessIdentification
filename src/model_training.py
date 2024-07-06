@@ -15,7 +15,8 @@ def train_model(gait_profiles, labels):
 
 if __name__ == "__main__":
     gait_profiles = np.load('gait_profiles.npy')
-    labels = np.load('labels.npy')  # 假设标签数据也已准备好
+    classpath = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/label/npy_file.npy'
+    labels = np.load(classpath)  # 假设标签数据也已准备好
     model = train_model(gait_profiles, labels)
     # 保存训练好的模型
     import joblib
