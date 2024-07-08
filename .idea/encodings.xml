@@ -5,6 +5,7 @@
     <file url="file://$PROJECT_DIR$/data/label/npy_file.npy" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/data/scoliosis/cyd-s01.dat" charset="GB18030" />
     <file url="file://$PROJECT_DIR$/data/scoliosis/cyd-s04.dat" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/cyd-s01.dat" charset="GB18030" />
     <file url="file://$PROJECT_DIR$/src/data_loader.py" charset="GBK" />
     <file url="PROJECT" charset="GBK" />
   </component>
