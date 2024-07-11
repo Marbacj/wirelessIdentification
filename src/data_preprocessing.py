@@ -1,56 +1,96 @@
-import os
-import numpy as np
+from CSIKit.util.csitools import get_CSI
+from CSIKit.util import filters
 from CSIKit.reader import IWLBeamformReader
-from CSIKit.util import csitools
-from scipy.signal import butter, filtfilt
-from CSIKit.csi import IWLCSIFrame
-from CSIKit.util.csi import ge
+import numpy as np
+from scipy.fft import ifft, fft
+
+ALL_CHANNELS = [*range(24), *range(26, 50), *range(62, 85), *range(88, 112), *range(121, 145), *range(147, 170),
+                *range(183, 207), *range(209, 233)]
+NULL_SUBCARRIERS = [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]
+PILOT_SUBCARRIERS = [0, 1]
+USELESS_SUBCARRIERS = NULL_SUBCARRIERS + PILOT_SUBCARRIERS
+
+DEFAULT_FS = 100
+
+
+def remove_distant_multipath(csi):
+    # Convert CSI to CIR
+    cir = ifft(csi, axis=1)
+    # Remove multipath components with delay > 0.5 microseconds
+    max_delay = 0.5e-6
+    subcarrier_spacing = 312.5e3  # 312.5 kHz subcarrier spacing for 20 MHz bandwidth in 802.11
+    max_index = int(max_delay * subcarrier_spacing * csi.shape[1])
+    cir[:, max_index:] = 0
+    # Convert CIR back to CSI
+    csi = fft(cir, axis=1)
+    return csi
+
+
+def load_csi_data(csi_data, subcarrier_range=ALL_CHANNELS, target_sample_rate=10, lowpass=True):
+    frames = csi_data.frames
+
+    # Identify the need for source resampling
+    no_frames = len(frames)
+    first_timestamp = float(frames[0].real_timestamp)
+    last_timestamp = float(frames[-1].real_timestamp)
+
+    final_timestamp = last_timestamp - first_timestamp
+    average_sample_rate = no_frames / final_timestamp
+
+    # Check the average sample rate is close enough to that we'd expect
+    if abs(average_sample_rate - DEFAULT_FS) > 10:
+        if average_sample_rate > DEFAULT_FS:
+            downsample_factor = int(average_sample_rate / DEFAULT_FS)
+            frames = frames[::downsample_factor]
+
+    # Retrieve CSI for the data we've got now
+    csi, _, _ = get_CSI(csi_data)
+    timestamps = csi_data.timestamps
+
+    csi = np.squeeze(csi)
+    csi = np.transpose(csi)
+
+    # Filter out unwanted subcarriers
+    csi = csi[[x for x in range(64) if x not in USELESS_SUBCARRIERS]]
+
+    # Remove distant multipath components
+    csi = remove_distant_multipath(csi)
+
+    # Handle Bandpass filter for high frequency noise removal
+    if lowpass:
+        lowcut = 0.3  # Hz
+        highcut = 2.0  # Hz
+        sampling_rate = 100  # Hz
+        order = 5
+
+        for x in range(csi.shape[0]):
+            csi[x] = filters.bandpass(csi[x], lowcut, highcut, sampling_rate, order)
+        csi = np.nan_to_num(csi)
+
+    csi_trans = np.transpose(csi)
+
+    # Downsample to 10Hz
+    csi_trans = csi_trans[::10]
+    timestamps = timestamps[::10]
+
+    return csi_trans, timestamps, timestamps
+
+
+# 读取文件并返回csi_data对象
 def read_csi_data(file_path):
     """读取单个.dat文件的CSI数据"""
-    reader = IWLBeamformReader()
-    csi_data = reader.read_file(file_path, scaled=True)
-    csi_matrix, no_frames, no_subcarriers = csitools.get_CSI(csi_data, metric="amplitude")
-    csi_matrix_first = csi_matrix[:, :, 0, 0]
-    return csi_matrix_first, no_frames, no_subcarriers
+    reader = CSVBeamformReader()
+    csi_data = reader.read_file(file_path)
+    return csi_data
 
-def remove_long_distance_multipath(csi_data, threshold=0.5):
-    """移除远距离多径成分"""
-    cir = np.fft.ifft(csi_data, axis=0)
-    cir[int(threshold * len(cir)):] = 0
-    csi_data_filtered = np.fft.fft(cir, axis=0)
-    return csi_data_filtered
 
-def remove_high_frequency_noise(csi_data, lowcut=0.3, highcut=2.0, fs=1000, order=5):
-    """移除高频噪声"""
-    nyquist = 0.5 * fs
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    b, a = butter(order, [low, high], btype='band')
-    csi_data_filtered = filtfilt(b, a, csi_data, axis=0)
-    return csi_data_filtered
+# 文件路径
+file_path = "C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis/cyd-s01.dat"
 
-def preprocess_csi_data(csi_data, no_frames, no_subcarriers):
-    """预处理CSI数据，消除远距离多径噪声和高频噪声"""
-    csi_data_filtered = remove_long_distance_multipath(csi_data)
-    csi_data_filtered = remove_high_frequency_noise(csi_data_filtered)
-    return csi_data_filtered
-
-def read_and_preprocess_data(folder_path):
-    """读取文件夹中的所有.dat文件并进行预处理"""
-    all_data = []
-    for file_name in os.listdir(folder_path):
-        if file_name.endswith('.dat'):
-            file_path = os.path.join(folder_path, file_name)
-            csi_data, no_frames, no_subcarriers = read_csi_data(file_path)
-            processed_data = preprocess_csi_data(csi_data, no_frames, no_subcarriers)
-            all_data.append(processed_data)
-
-    # 保存预处理后的数据到文件
-    np.save('preprocessed_data.npy', all_data)
-
-    return all_data
 
 if __name__ == "__main__":
-    folder_path = '/Users/bachmar/wiridt/wirelessIdentification/data/scoliosis'
-    all_processed_data = read_and_preprocess_data(folder_path)
-    # 将预处理后的数据保存或进一步处理
+    # 示例：从文件读取预处理后的CSI数据
+    # 读取CSI数据
+    csi_data = read_csi_data(file_path)
+# 调用load_csi_data函数进行预处理
+    preprocessed_csi, timestamps, _ = load_csi_data(csi_data)
