@@ -1,0 +1,13 @@
+/Users/bachmar/PycharmProjects/wirelessIdentification/.venv/bin/python /Users/bachmar/wiridt/wirelessIdentification/src/data_preprocessing.py
+/Users/bachmar/PycharmProjects/wirelessIdentification/.venv/lib/python3.12/site-packages/scipy/signal/_arraytools.py:103: RuntimeWarning: invalid value encountered in multiply
+  ext = np.concatenate((2 * left_end - left_ext,
+Traceback (most recent call last):
+  File "/Users/bachmar/wiridt/wirelessIdentification/src/data_preprocessing.py", line 55, in <module>
+    all_processed_data = read_and_preprocess_data(folder_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bachmar/wiridt/wirelessIdentification/src/data_preprocessing.py", line 49, in read_and_preprocess_data
+    np.save('preprocessed_data.npy', all_data)
+  File "/Users/bachmar/PycharmProjects/wirelessIdentification/.venv/lib/python3.12/site-packages/numpy/lib/npyio.py", line 545, in save
+    arr = np.asanyarray(arr)
+          ^^^^^^^^^^^^^^^^^^
+ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (250,) + inhomogeneous part.

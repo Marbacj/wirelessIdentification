@@ -4,7 +4,7 @@ from CSIKit.reader import IWLBeamformReader
 from CSIKit.util import csitools
 from scipy.signal import butter, filtfilt
 from CSIKit.csi import IWLCSIFrame
-
+from CSIKit.util.csi import ge
 def read_csi_data(file_path):
     """读取单个.dat文件的CSI数据"""
     reader = IWLBeamformReader()
@@ -51,6 +51,6 @@ def read_and_preprocess_data(folder_path):
     return all_data
 
 if __name__ == "__main__":
-    folder_path = 'C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis'
+    folder_path = '/Users/bachmar/wiridt/wirelessIdentification/data/scoliosis'
     all_processed_data = read_and_preprocess_data(folder_path)
     # 将预处理后的数据保存或进一步处理
