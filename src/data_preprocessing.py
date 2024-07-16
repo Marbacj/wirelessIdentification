@@ -28,12 +28,13 @@ def remove_distant_multipath(csi):
 
 def load_csi_data(csi_data, subcarrier_range=ALL_CHANNELS, target_sample_rate=10, lowpass=True):
     frames = csi_data.frames
-
+    timestamps = csi_data.timestamps;
     # Identify the need for source resampling
     no_frames = len(frames)
-    first_timestamp = float(frames[0].real_timestamp)
-    last_timestamp = float(frames[-1].real_timestamp)
-
+    # first_timestamp = float(frames[0]. timestamps)
+    # last_timestamp = float(frames[-1].timestamps)
+    first_timestamp = timestamps[0];
+    last_timestamp = timestamps[-1];
     final_timestamp = last_timestamp - first_timestamp
     average_sample_rate = no_frames / final_timestamp
 
@@ -64,6 +65,7 @@ def load_csi_data(csi_data, subcarrier_range=ALL_CHANNELS, target_sample_rate=10
         order = 5
 
         for x in range(csi.shape[0]):
+
             csi[x] = filters.bandpass(csi[x], lowcut, highcut, sampling_rate, order)
         csi = np.nan_to_num(csi)
 
@@ -79,13 +81,14 @@ def load_csi_data(csi_data, subcarrier_range=ALL_CHANNELS, target_sample_rate=10
 # 读取文件并返回csi_data对象
 def read_csi_data(file_path):
     """读取单个.dat文件的CSI数据"""
-    reader = CSVBeamformReader()
+    reader = IWLBeamformReader()
     csi_data = reader.read_file(file_path)
+
     return csi_data
 
 
 # 文件路径
-file_path = "C:/Users/Uncle/PycharmProjects/wirelessIdentification/data/scoliosis/cyd-s01.dat"
+file_path = "/Users/bachmar/wiridt/wirelessIdentification/data/scoliosis/cyd-s01.dat"
 
 
 if __name__ == "__main__":
